@@ -248,6 +248,48 @@ def basis_matrix(O):
 def successive_minima(O):
     return [b.reduced_norm() for b in reduced_basis(O)]
 
+def ideal_mod_N(gamma, alpha, N, O):
+    "Find quaternion a such that a*alpha = gamma mod N"
+    "Assumes this is a left O0-ideal"
+    assert is_prime(N), "Not implemented for non-prime N :(("
+    B = alpha.parent()
+    i, j, k = B.gens()
+    mat_i, mat_j, mat_k = B.modp_splitting_data(N)
+    Z_N = Integers(N)
+    mat_1 = Matrix(Z_N, [[1, 0], [0, 1]])
+    mat_basis = [mat_1, mat_i, mat_j, mat_k]
+    mat_alpha = sum(Z_N(c)*mat for c, mat in zip(alpha.coefficient_tuple(), mat_basis))
+    mat_gamma = sum(Z_N(c)*mat for c, mat in zip(gamma.coefficient_tuple(), mat_basis))
+    a = mat_alpha.solve_left(mat_gamma) #Actually this one is always a row vector
+    system = []
+    a_vec = []
+    for ii in range(2):
+        for jj in range(2):
+            system.append([m[ii, jj] for m in mat_basis])
+            a_vec.append(a[ii, jj])
+    system = Matrix(Z_N, system)
+    a_vec = vector(Z_N, a_vec)
+    v = system.solve_right(a_vec)
+    beta_1 = sum(B(c)*b for c, b in zip(v, [B(1), i, j, k]))
+    if beta_1 not in O:
+        O0 = B.maximal_order()
+        I = O0*O
+        d = I.norm().denominator()
+        beta_1 = N*d*beta_1
+    assert beta_1 in O
+    return beta_1
+
+def decompose_in_ideal(gamma, alpha, N, O):
+    "Write gamma as beta_1*alpha + beta_2*N (assumes this is possible)"
+    beta_1 = ideal_mod_N(gamma, alpha, N, O)
+    beta_2 = (gamma - beta_1*alpha)/N
+    assert beta_1 in O
+    assert beta_2 in O
+    assert beta_1*alpha + beta_2*N == gamma
+    return beta_1, beta_2
+
+    
+
 ###############################################
 #                                             #
 #    Jumping between quaternion algebras      #
