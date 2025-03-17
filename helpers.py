@@ -105,6 +105,23 @@ def reduced_ideal(I):
     assert J.conjugate().is_equivalent(I.conjugate())
     return J
 
+def reduced_ideal_odd(I):
+    reduced_basis_elements = reduced_basis(I)
+    c = 0
+    beta = reduced_basis_elements[c]
+    while beta.reduced_norm()/I.norm() % 2 == 0:
+        c += 1
+        if c > 10000:
+            assert False
+        if c > 3:
+            beta = sum(randint(1,10)*gen for gen in reduced_basis_elements)
+        else:
+            beta = reduced_basis_elements[c]
+
+    J = I*(beta.conjugate()/I.norm())
+    assert J.conjugate().is_equivalent(I.conjugate())
+    return J
+
 def reduced_basis_from_gens(gens, Quat):   
     """
     More generally reduces the basis of any (not necessarily full rank) lattice
@@ -215,7 +232,7 @@ def order_isomorphism(O, alpha):
     B = O.quaternion_algebra()
     return B.quaternion_order([alpha * g * ~alpha for g in O.basis()])
 
-def trace_0(I):
+def trace_0_basis(I):
     beta0, beta1, beta2, beta3 = reduced_basis(I)
     T0 = (QQ**4).submodule((QQ**4).basis()[1:])
     M = I.free_module().intersection(T0).basis_matrix()
