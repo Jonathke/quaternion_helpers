@@ -265,34 +265,76 @@ def basis_matrix(O):
 def successive_minima(O):
     return [b.reduced_norm() for b in reduced_basis(O)]
 
+def pullback(I, J):
+    r"""Compute the pullback of I by J"""
+    assert I.left_order() == J.right_order()
+    assert gcd(I.norm(), J.norm()) == 1
+
+    O = J.left_order()
+    return J*I + O*I.norm()
+
+def pushforward(I, J):
+    r"""Compute the pushforward of I by J"""
+    assert I.left_order() == J.left_order()
+    assert gcd(I.norm(), J.norm()) == 1
+    
+    O = J.right_order()
+    return J.conjugate()*I + O*I.norm()
+
+
+
+##############################
+#
+#       N-torsion stuff
+#
+##############################
+
+class O_mod_N():
+    def __init__(self, O, N):
+        assert is_prime(N), "Not implemented for non-prime N :(("
+        self.B = O.quaternion_algebra()
+        self.O = O
+        self.basis_quat = self.B.basis()
+        mat_i, mat_j, mat_k = self.B.modp_splitting_data(N)
+        self.Z_N = Integers(N)
+        mat_1 = Matrix(self.Z_N, [[1, 0], [0, 1]])
+        self.mat_basis_quat = [mat_1, mat_i, mat_j, mat_k]
+
+        self.basis_order = O.basis()
+        self.mat_basis_order = []
+        for beta in self.basis_order:
+            self.mat_basis_order.append(sum(self.Z_N(c)*mat for c, mat in zip(beta.coefficient_tuple(), self.mat_basis_quat)))
+        
+    def project(self, alpha):
+        assert alpha in self.O
+        return sum(self.Z_N(c)*mat for c, mat in zip(alpha.coefficient_tuple(), self.mat_basis_quat))
+    
+    def lift(self, mat_alpha):
+        system = []
+        a_vec = []
+        for ii in range(2):
+            for jj in range(2):
+                system.append([m[ii, jj] for m in self.mat_basis_order])
+                a_vec.append(mat_alpha[ii, jj])
+        system = Matrix(self.Z_N, system)
+        a_vec = vector(self.Z_N, a_vec)
+        v = system.solve_right(a_vec)
+        alpha = sum(self.B(c)*b for c, b in zip(v, self.basis_order))
+        assert alpha in self.O
+        assert self.project(alpha) == mat_alpha
+        return alpha
+
+
 def ideal_mod_N(gamma, alpha, N, O):
-    "Find quaternion a such that a*alpha = gamma mod N"
+    "Find quaternion beta_1 such that beta_1*alpha = gamma mod N"
     "Assumes this is a left O0-ideal"
+    print(N)
     assert is_prime(N), "Not implemented for non-prime N :(("
-    B = alpha.parent()
-    i, j, k = B.gens()
-    mat_i, mat_j, mat_k = B.modp_splitting_data(N)
-    Z_N = Integers(N)
-    mat_1 = Matrix(Z_N, [[1, 0], [0, 1]])
-    mat_basis = [mat_1, mat_i, mat_j, mat_k]
-    mat_alpha = sum(Z_N(c)*mat for c, mat in zip(alpha.coefficient_tuple(), mat_basis))
-    mat_gamma = sum(Z_N(c)*mat for c, mat in zip(gamma.coefficient_tuple(), mat_basis))
-    a = mat_alpha.solve_left(mat_gamma) #Actually this one is always a row vector
-    system = []
-    a_vec = []
-    for ii in range(2):
-        for jj in range(2):
-            system.append([m[ii, jj] for m in mat_basis])
-            a_vec.append(a[ii, jj])
-    system = Matrix(Z_N, system)
-    a_vec = vector(Z_N, a_vec)
-    v = system.solve_right(a_vec)
-    beta_1 = sum(B(c)*b for c, b in zip(v, [B(1), i, j, k]))
-    if beta_1 not in O:
-        O0 = B.maximal_order()
-        I = O0*O
-        d = I.norm().denominator()
-        beta_1 = N*d*beta_1
+    OmodN = O_mod_N(O, N)
+    mat_alpha = OmodN.project(alpha)
+    mat_gamma = OmodN.project(gamma)
+    b = mat_alpha.solve_left(mat_gamma) #Actually this one is always a row vector
+    beta_1 = OmodN.lift(b)
     assert beta_1 in O
     return beta_1
 
@@ -305,7 +347,42 @@ def decompose_in_ideal(gamma, alpha, N, O):
     assert beta_1*alpha + beta_2*N == gamma
     return beta_1, beta_2
 
-    
+def find_correct_pushforward(I, J):
+    r"""
+    given two left O-ideals I, J, find theta \in O so that J is the pushforward of I by alpha
+    """
+    O = I.left_order()
+    assert O == J.left_order()
+    N = ZZ(I.norm())
+    assert N == ZZ(J.norm()), "Otherwise this makes no sense"
+
+    OmodN = O_mod_N(O, N)
+    alpha_I = ideal_generator(I)
+    alpha_J = ideal_generator(J)
+    mat_I = OmodN.project(alpha_I)
+    mat_J = OmodN.project(alpha_J)
+
+    K_I = mat_I.right_kernel().basis()[0]
+    K_J = mat_J.right_kernel().basis()[0]
+
+    system = Matrix(OmodN.Z_N, [[K_I[0], K_I[1], 0, 0], [0, 0, K_I[0], K_I[1]]])
+    theta_0 = system.solve_right(K_J) #This one is typically singular, meaning its norm is divisible by N
+
+    for v in system.right_kernel():
+        theta = theta_0 + v
+        theta = Matrix(OmodN.Z_N, [[theta[0], theta[1]], [theta[2], theta[3]]])
+        if not theta.is_singular():
+            break
+
+    theta = OmodN.lift(theta)
+    J_prime = pushforward(I, O*theta)
+
+    alpha = compute_isomorphism(J_prime.left_order(), J.left_order())
+    J_prime = alpha**(-1)*J_prime*alpha
+    assert J_prime.conjugate().is_equivalent(J.conjugate())
+    return theta
+
+
 
 ###############################################
 #                                             #
