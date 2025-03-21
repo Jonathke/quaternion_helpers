@@ -395,7 +395,7 @@ def find_correct_pushforward(I, J):
     alpha = compute_isomorphism(I_prime.left_order(), J.left_order())
     I_prime = alpha**(-1)*I_prime*alpha
     theta = find_correct_pushforward_endo(I_prime, J)
-    K = K*theta
+    K = K*(alpha*theta*alpha**(-1))
     return K
 
 

@@ -65,10 +65,8 @@ def test_pushforward_thing():
     ell = next_prime(randint(p, p**2))
 
     print("Testing two random ideals")
-    I = heuristic_random_ideal(O0, ell)
-    J = heuristic_random_ideal(O0, ell)
-    temp = heuristic_random_ideal(O0, next_prime(ell))
-    J = pushforward(J, temp)
+    I = heuristic_random_ideal(O0, ell).conjugate()
+    J = O0*represent_integer(O0, ell)
 
     K = find_correct_pushforward(I, J)
     J_prime = pushforward(I, K)
