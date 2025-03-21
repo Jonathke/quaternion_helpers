@@ -385,9 +385,9 @@ def find_correct_pushforward_endo(I, J):
 def find_correct_pushforward(I, J):
     assert I.norm() == J.norm()
     K = connecting_ideal(I.left_order(), J.left_order())
-    Kbasis = reduced_basis(K)
     while gcd(K.norm(), I.norm()) != 1:
         print("Retrying norm...")
+        Kbasis = reduced_basis(K)
         beta = sum(randint(-10, 10)*b for b in Kbasis)
         K = K*(beta.conjugate()/K.norm())
 
