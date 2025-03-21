@@ -385,8 +385,16 @@ def find_correct_pushforward_endo(I, J):
 def find_correct_pushforward(I, J):
     assert I.norm() == J.norm()
     K = connecting_ideal(I.left_order(), J.left_order())
-    assert gcd(K.norm(), I.norm()) == 1
-    theta = find_correct_pushforward_endo(pushforward(I, K), J)
+    Kbasis = reduced_basis(K)
+    while gcd(K.norm(), I.norm()) != 1:
+        print("Retrying norm...")
+        beta = sum(randint(-10, 10)*b for b in Kbasis)
+        K = K*(beta.conjugate()/K.norm())
+
+    I_prime = pushforward(I, K)
+    alpha = compute_isomorphism(I_prime.left_order(), J.left_order())
+    I_prime = alpha**(-1)*I_prime*alpha
+    theta = find_correct_pushforward_endo(I_prime, J)
     K = K*theta
     return K
 
