@@ -347,7 +347,7 @@ def decompose_in_ideal(gamma, alpha, N, O):
     assert beta_1*alpha + beta_2*N == gamma
     return beta_1, beta_2
 
-def find_correct_pushforward(I, J):
+def find_correct_pushforward_endo(I, J):
     r"""
     given two left O-ideals I, J, find theta \in O so that J is the pushforward of I by alpha
     """
@@ -382,6 +382,13 @@ def find_correct_pushforward(I, J):
     assert J_prime.conjugate().is_equivalent(J.conjugate())
     return theta
 
+def find_correct_pushforward(I, J):
+    assert I.norm() == J.norm()
+    K = connecting_ideal(I.left_order(), J.left_order())
+    assert gcd(K.norm(), I.norm()) == 1
+    theta = find_correct_pushforward_endo(pushforward(I, K), J)
+    K = K*theta
+    return K
 
 
 ###############################################

@@ -29,7 +29,7 @@ def test_basis_thing():
     assert beta_1*alpha + beta_2*ell == gamma
     print(f"success!")
 
-def test_pushforward_thing():
+def test_pushforward_endo_thing():
     p = 10007
     B = QuaternionAlgebra(-1, -p)
     O0 = B.maximal_order()
@@ -50,7 +50,7 @@ def test_pushforward_thing():
     rho = represent_integer(O0, ell)
     J = O0*rho
 
-    theta = find_correct_pushforward(I, J)
+    theta = find_correct_pushforward_endo(I, J)
     J_prime = pushforward(I, (O0*theta))
 
     assert is_isomorphic(J_prime.left_order(), J.left_order())
@@ -58,6 +58,25 @@ def test_pushforward_thing():
     
     print("     > Success!")
 
+def test_pushforward_thing():
+    p = 10007
+    B = QuaternionAlgebra(-1, -p)
+    O0 = B.maximal_order()
+    ell = next_prime(randint(p, p**2))
+
+    print("Testing two random ideals")
+    I = heuristic_random_ideal(O0, ell)
+    J = heuristic_random_ideal(O0, ell)
+    temp = heuristic_random_ideal(O0, next_prime(randint(p, p**2)))
+    J = pushforward(J, temp)
+
+    K = find_correct_pushforward(I, J)
+    J_prime = pushforward(I, K)
+
+    assert is_isomorphic(J_prime.left_order(), J.left_order())
+    assert is_isomorphic(J_prime.right_order(), J.right_order())
+
+    print("     > Success!")
 
 
 if __name__ == "__main__":
