@@ -368,15 +368,13 @@ def find_correct_pushforward_endo(I, J):
     system = Matrix(OmodN.Z_N, [[K_I[0], K_I[1], 0, 0], [0, 0, K_I[0], K_I[1]]])
     theta_0 = system.solve_right(K_J) #This one is typically singular, meaning its norm is divisible by N
 
-    for v in system.right_kernel():
-        theta = theta_0 + v
+    theta = Matrix(OmodN.Z_N, [[0,0], [0,0]])
+    while theta.is_singular():
+        theta = theta_0 + system.right_kernel().random_element()
         theta = Matrix(OmodN.Z_N, [[theta[0], theta[1]], [theta[2], theta[3]]])
-        if not theta.is_singular():
-            break
 
     theta = OmodN.lift(theta)
     J_prime = pushforward(I, O*theta)
-
     alpha = compute_isomorphism(J_prime.left_order(), J.left_order())
     J_prime = alpha**(-1)*J_prime*alpha
     assert J_prime.conjugate().is_equivalent(J.conjugate())
