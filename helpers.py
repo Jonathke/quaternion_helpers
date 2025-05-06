@@ -1,6 +1,5 @@
 import itertools
 from sage.all import *
-from short_vec import *
 from random import randint
 
 def ideal_generator(I):

@@ -32,9 +32,7 @@ def solve_closest_vector_problem(lattice_basis, target):
     lattice basis and target vector
     """
     L = IntegerMatrix.from_matrix(lattice_basis.LLL())
-    print("HERE")
     v = CVP.closest_vector(L, target)
-    print("AFTER")
     # fpylll returns a type `tuple` object
     return vector(v)
 
