@@ -1,5 +1,6 @@
 import itertools
 from sage.all import *
+from short_vec import *
 from random import randint
 
 def ideal_generator(I):
@@ -63,9 +64,8 @@ def heuristic_random_ideal(O0, M):
     while gcd(N, M) > 1:
         N = next_prime(randint(p, p**2))
     alpha = represent_integer(O0, N*M)
-    factor(alpha.reduced_norm())
     I = O0*alpha + O0*M
-    #assert I.norm() == M
+    assert I.norm() == M
     return I
 
 def order_isomorphism(O, alpha):
@@ -110,6 +110,23 @@ def reduced_ideal_odd(I):
     c = 0
     beta = reduced_basis_elements[c]
     while beta.reduced_norm()/I.norm() % 2 == 0:
+        c += 1
+        if c > 10000:
+            assert False
+        if c > 3:
+            beta = sum(randint(1,10)*gen for gen in reduced_basis_elements)
+        else:
+            beta = reduced_basis_elements[c]
+
+    J = I*(beta.conjugate()/I.norm())
+    assert J.conjugate().is_equivalent(I.conjugate())
+    return J
+
+def reduced_ideal_prime(I):
+    reduced_basis_elements = reduced_basis(I)
+    c = 0
+    beta = reduced_basis_elements[c]
+    while not is_pseudoprime(beta.reduced_norm()/I.norm()):
         c += 1
         if c > 10000:
             assert False
@@ -232,8 +249,7 @@ def order_isomorphism(O, alpha):
     B = O.quaternion_algebra()
     return B.quaternion_order([alpha * g * ~alpha for g in O.basis()])
 
-def trace_0_basis(I):
-    beta0, beta1, beta2, beta3 = reduced_basis(I)
+def reduced_trace_0_basis(I):
     T0 = (QQ**4).submodule((QQ**4).basis()[1:])
     M = I.free_module().intersection(T0).basis_matrix()
     return reduced_basis_from_gens([sum(c*g for c,g in zip(v, I.quaternion_algebra().basis())) for v in M], I.quaternion_algebra())

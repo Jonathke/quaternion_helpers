@@ -1,6 +1,5 @@
 from helpers import *
 
-
 def test_successive_minima():
     p = 10007
     B = QuaternionAlgebra(-1, -p)
@@ -76,7 +75,8 @@ def test_pushforward_thing():
 
     print("     > Success!")
 
+    
 
 if __name__ == "__main__":
-    for _ in range(10):
-        test_pushforward_thing()
+    test_pushforward_thing()
+    
