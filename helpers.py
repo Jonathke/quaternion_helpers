@@ -207,7 +207,7 @@ def all_roots_mod(d, M):
     
     return sols
 
-def all_cornacchia(d, m):
+def all_cornacchia(d, m, only_mod_2 = False):
     # Find all solutions to x^2 + dy^2 = m
     if m < 0:
         return []
@@ -233,16 +233,18 @@ def all_cornacchia(d, m):
                 n, r = r, n%r
             s = sqrt((tempm - r**2)/d)
             if s in ZZ:
-                sols.append((g*r, g*s))
-                sols.append((g*r, -g*s))
-                sols.append((-g*r, g*s))
-                sols.append((-g*r, -g*s))
+                yield g*r, g*s
+                if not only_mod_2:
+                    yield g*r, -g*s
+                    yield -g*r, g*s
+                    yield g*r, -g*s
+
                 if d == 1:
-                    sols.append((g*s, g*r))
-                    sols.append((g*s, -g*r))
-                    sols.append((-g*s, g*r))
-                    sols.append((-g*s, -g*r))
-    return list(set(sols))
+                    yield g*s, g*r
+                    if not only_mod_2:
+                        yield g*s, -g*r
+                        yield -g*s, g*r
+                        yield g*s, -g*r
 
 def order_isomorphism(O, alpha):
     B = O.quaternion_algebra()
