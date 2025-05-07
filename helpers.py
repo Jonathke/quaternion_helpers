@@ -27,7 +27,7 @@ def make_primitive(alpha, O):
     return alpha/d
         
 def cornacchia(QF, m):
-    m_prime = prod([l**e for l, e in factor(m, limit=100) if l < 100])
+    m_prime = prod([l**e for l, e in factor(m, limit=1000) if l < 1000])
     if not is_pseudoprime(m/m_prime):
         return None, None, False
     sol = QF.solve_integer(m)
