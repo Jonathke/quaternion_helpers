@@ -309,6 +309,7 @@ def pushforward(I, J):
 class O_mod_N():
     def __init__(self, O, N):
         assert is_prime(N), "Not implemented for non-prime N :(("
+        self.N = N
         self.B = O.quaternion_algebra()
         self.O = O
         self.basis_quat = self.B.basis()
@@ -340,6 +341,17 @@ class O_mod_N():
         assert alpha in self.O
         assert self.project(alpha) == mat_alpha
         return alpha
+    
+    def random_ideal(self):
+        "Returns a random ideal of O of norm N"
+        a = randint(0, self.N-1)
+        b = randint(0, self.N-1)
+        assert not a == b == 0
+
+        alpha = self.lift(Matrix(self.Z_N, [[a, b], [0, 0]]))
+        assert alpha.reduced_norm() % self.N == 0
+
+        return self.O*self.N + self.O*alpha
 
 
 def ideal_mod_N(gamma, alpha, N, O):
