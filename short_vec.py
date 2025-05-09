@@ -26,12 +26,15 @@ The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software."""
 
 
-def solve_closest_vector_problem(lattice_basis, target):
+def solve_closest_vector_problem(lattice_basis, target, reduced=False):
     """
     Use the fpylll library to solve the CVP problem for a given
     lattice basis and target vector
     """
-    L = IntegerMatrix.from_matrix(lattice_basis.LLL())
+    if reduced:
+        L = IntegerMatrix.from_matrix(lattice_basis)
+    else:
+        L = IntegerMatrix.from_matrix(lattice_basis.LLL())
     v = CVP.closest_vector(L, target)
     # fpylll returns a type `tuple` object
     return vector(v)
@@ -74,7 +77,7 @@ def generate_short_vectors_fpyll(L, bound, count=2000):
         
     return short_vectors
 
-def generate_short_vectors(lattice_basis, bound, count=2000):
+def generate_short_vectors(lattice_basis, bound, reduced=False, count=2000):
     """
     Generate a generator of short vectors with norm <= `bound`
     returns at most `count` vectors.
@@ -82,7 +85,11 @@ def generate_short_vectors(lattice_basis, bound, count=2000):
     Most of the heavy lifting of this function is done by 
     generate_short_vectors_fpyll
     """
-    L = lattice_basis.LLL()
+    if reduced:
+        L = lattice_basis
+    else:
+        L = lattice_basis.LLL()
+    
     short_vectors = generate_short_vectors_fpyll(L, bound, count=count)
     for _, xis in short_vectors:
         # Returns values x1,x2,...xr such that
@@ -92,14 +99,14 @@ def generate_short_vectors(lattice_basis, bound, count=2000):
         yield v
 
 
-def generate_close_vectors(lattice_basis, target, p, L, count=2000):
+def generate_close_vectors(lattice_basis, target, p, L, reduced=False, count=1000):
     """
     Generate a generator of vectors which are close, without
     bound determined by N to the `target`. The first
     element of the list is the solution of the CVP.
     """
     # Compute the closest element
-    closest = solve_closest_vector_problem(lattice_basis, target)
+    closest = solve_closest_vector_problem(lattice_basis, target, reduced=reduced)
     yield closest
 
     # Now use short vectors below a bound to find
@@ -110,14 +117,17 @@ def generate_close_vectors(lattice_basis, target, p, L, count=2000):
     distance = diff.dot_product(diff)
 
     # Compute the bound from L
+    #I don't understand why the bound should get bigger if the shortest vector is very close....
     b0 = L // p
-    bound = floor((b0 + distance) + (2 * (b0 * distance).sqrt()))
+    #bound = floor((b0 + distance) + (2 * (b0 * distance).sqrt()))
+    bound = floor(b0)
 
-    short_vectors = generate_short_vectors(lattice_basis, bound, count=count)
+    short_vectors = generate_short_vectors(lattice_basis, bound, reduced=reduced, count=count)
 
     counter = 0
     for v in short_vectors:
         if counter > 1000:
+            print("????")
             break
         counter += 1
         yield closest + v
