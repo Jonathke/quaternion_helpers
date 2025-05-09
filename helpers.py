@@ -97,11 +97,13 @@ def reduced_basis(I):
     U = G.LLL_gram().transpose()
     return [sum(c*beta for c, beta in zip(row, B)) for row in U]
 
-def reduced_ideal(I):
+def reduced_ideal(I, return_elt=False):
     reduced_basis_elements = reduced_basis(I)
     beta = reduced_basis_elements[0]
     J = I*(beta.conjugate()/I.norm())
     assert J.conjugate().is_equivalent(I.conjugate())
+    if return_elt:
+        return J, beta
     return J
 
 def reduced_ideal_odd(I):
